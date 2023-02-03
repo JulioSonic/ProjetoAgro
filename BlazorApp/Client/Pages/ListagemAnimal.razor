@@ -1,0 +1,119 @@
+﻿@page "/listagemAnimals"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+
+<h1>Listagem de Animais</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <a href='/Animal/add' class="btn btn-primary" role="button">
+            <i class="fas fa-animal-plus"></i>
+            Adicionar Animal
+        </a>
+    </div>
+    <div class="input-group col" style="width: 50px">
+        <input type="text" style="width: 50px" class="form-control" placeholder="Procure um animal pela TAG"
+               @bind="SearchString" @bind:event="oninput" @onkeyup="Filteranimal" />
+
+        @if (SearchString.Length > 0)
+        {
+            <div class="input-group-append" style="width: 100px">
+                <button class="btn btn-danger" style="width: 100px" value="Limpar" @onclick="ResetSearch">
+                    Limpar
+                </button>
+            </div>
+        }
+
+    </div>
+
+
+</div>
+<br />
+
+@if (animalList == null)
+{
+    <p><em>Carregando...</em></p>
+}
+else
+{
+    <table class="table table-striped align-middle table-bordered">
+        <thead class="table-success">
+            <tr>
+                <th>ID</th>
+                <th>Tag</th>
+                <th>Fazenda</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var animal in animalList)
+            {
+                <tr>
+                    <td>@animal.ID</td>
+                    <td>@animal.Tag</td>
+                    @foreach (var fazenda in Fazendas)
+                    {
+                        if (animal.FazendaID == fazenda.ID)
+                        {
+                            <td>@fazenda.Nome</td>
+                        }
+                    }
+                    <td>
+                        <a href='/Animal/edit/@animal.ID' class="btn btn-outline-dark" role="button">
+                            Editar
+                        </a>
+                        <a href='/Animal/delete/@animal.ID' class="btn btn-outline-danger" role="button">
+                            Deletar
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    protected List<Animal> animalList = new();
+    protected List<Animal> searchanimalData = new();
+    protected Animal animal = new();
+    protected string SearchString { get; set; } = string.Empty;
+    public List<Fazenda> Fazendas { get; set; } = new List<Fazenda>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Getanimal();
+    }
+
+    protected async Task Getanimal()
+    {
+        animalList = await Http.GetFromJsonAsync<List<Animal>>("api/Animal");
+        searchanimalData = animalList;
+        Fazendas = await Http.GetFromJsonAsync<List<Fazenda>>("api/Fazenda");
+    }
+
+    protected void Filteranimal()
+    {
+        if (!string.IsNullOrEmpty(SearchString))
+        {
+            animalList = searchanimalData
+                .Where(x => x.Tag.IndexOf(SearchString, StringComparison.OrdinalIgnoreCase) != -1)
+                .ToList();
+        }
+        else
+        {
+            animalList = searchanimalData;
+        }
+    }
+
+    protected void DeleteConfirm(int animalID)
+    {
+        animal = animalList.FirstOrDefault(x => x.ID == animalID);
+    }
+
+    public void ResetSearch()
+    {
+        SearchString = string.Empty;
+        animalList = searchanimalData;
+    }
+
+}

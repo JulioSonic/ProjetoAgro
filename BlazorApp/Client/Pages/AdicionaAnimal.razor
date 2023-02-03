@@ -1,0 +1,81 @@
+﻿@page "/Animal/add"
+@page "/Animal/edit/{animalId:int}"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h1>@Titulo Animal</h1>
+<hr />
+
+<EditForm Model="@animal" OnValidSubmit="SaveAnimal">
+    <DataAnnotationsValidator />
+    
+    <div class="mb-3">
+        <label for="Tag" class="form-label">Tag</label>
+        <div class="col-md-4">
+            <input class="form-control" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);"
+                   type="number"
+                   maxlength="15" @bind="animal.Tag" />
+        </div>
+        <ValidationMessage For="@(() => animal.Tag)"  />
+    </div>
+
+    <div class="mb-3">
+        @*<label for="Tag" class="form-label">Fazenda</label>*@
+        <div class="col-md-4">
+            <InputSelect @bind-Value="animal.FazendaID" class="form-control">
+                <option value="0">Selecione uma Fazenda</option>
+                @foreach (var fazenda in Fazendas)
+                {
+                    <option value="@fazenda.ID">@fazenda.Nome</option>
+                }
+            </InputSelect>
+        </div>
+        <ValidationMessage For="@(() => animal.FazendaID)" />
+    </div>
+   
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <button class="btn btn-light" @onclick="Cancel">Cancelar</button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int animalId { get; set; }
+
+    protected string Titulo = "Adicionar";
+    protected Animal animal = new();
+    protected Fazenda fazenda = new();
+    public List<Fazenda> Fazendas { get; set; } = new List<Fazenda>();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (animalId != 0)
+        {
+            Titulo = "Editar";
+            animal = await Http.GetFromJsonAsync<Animal>("api/Animal/" + animalId);
+        }
+
+        Fazendas = await Http.GetFromJsonAsync<List<Fazenda>>("api/Fazenda");
+    }
+
+    protected async Task SaveAnimal()
+    {
+        if (animal.ID != 0)
+        {
+            await Http.PutAsJsonAsync("api/Animal", animal);
+        }
+        else
+        {
+            await Http.PostAsJsonAsync("api/Animal", animal);
+        }
+        Cancel();
+    }
+
+    public void Cancel()
+    {
+        NavigationManager.NavigateTo("/listagemAnimals");
+    }
+}

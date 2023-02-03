@@ -1,0 +1,42 @@
+﻿@page "/Fazenda/delete/{ID:int}"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h2>Deletar Fazenda</h2>
+<br />
+
+<div class="form-group">
+    <h4>Você quer realmente deleter essa Fazenda?</h4>
+
+
+    <span>Nome: @Fazenda.Nome</span><br />
+  
+    
+</div>
+<div class="form-group">
+    <input type="submit" value="Deletar" @onclick="(async () => await RemoveFazenda(Fazenda.ID))" class="btn btn-danger" />
+    <input type="submit" value="Cancelar" @onclick="(() => Cancel())" class="btn btn-warning" />
+</div>
+
+@code {
+    [Parameter]
+    public int ID { get; set; }
+    Fazenda Fazenda = new Fazenda();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Fazenda = await Http.GetFromJsonAsync<Fazenda>("/api/Fazenda/" + Convert.ToInt32(ID));
+    }
+
+    protected async Task RemoveFazenda(int ID)
+    {
+        await Http.DeleteAsync("api/Fazenda/" + ID);
+        NavigationManager.NavigateTo("/listagemFazendas");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/listagemFazendas");
+    }
+}

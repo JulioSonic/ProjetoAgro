@@ -1,0 +1,61 @@
+﻿@page "/Fazenda/add"
+@page "/Fazenda/edit/{ID:int}"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h1>@Titulo Fazenda</h1>
+<hr />
+
+<EditForm Model="@Fazenda" OnValidSubmit="SaveFazenda">
+    <DataAnnotationsValidator />
+    
+    <div class="mb-3">
+        <label for="Name" class="form-label">Nome</label>
+        <div class="col-md-4">
+            <InputText class="form-control" @bind-Value="Fazenda.Nome" />
+        </div>
+        <ValidationMessage For="@(() => Fazenda.Nome)" />
+    </div>
+   
+   
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <button class="btn btn-light" @onclick="Cancel">Cancelar</button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int ID { get; set; }
+
+    protected string Titulo = "Adicionar";
+    protected Fazenda Fazenda = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ID != 0)
+        {
+            Titulo = "Editar";
+            Fazenda = await Http.GetFromJsonAsync<Fazenda>("api/Fazenda/" + ID);
+        }
+    }
+
+    protected async Task SaveFazenda()
+    {
+        if (Fazenda.ID != 0)
+        {
+            await Http.PutAsJsonAsync("api/Fazenda", Fazenda);
+        }
+        else
+        {
+            await Http.PostAsJsonAsync("api/Fazenda", Fazenda);
+        }
+        Cancel();
+    }
+
+    public void Cancel()
+    {
+        NavigationManager.NavigateTo("/listagemFazendas");
+    }
+}
